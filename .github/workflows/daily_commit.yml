@@ -1,0 +1,48 @@
+name: Rohit's Daily Commit
+
+on:
+  schedule:
+    - cron: '30 3 * * 1'  # Monday at 09:30 AM IST (04:00 AM UTC)
+    - cron: '30 4 * * 2'  # Tuesday at 10:30 AM IST
+    - cron: '30 5 * * 3'  # Wednesday at 11:30 AM IST
+    - cron: '30 6 * * 4'  # Thursday at 12:30 PM IST
+    - cron: '30 7 * * 5'  # Friday at 01:30 PM IST
+    - cron: '30 8 * * 6'  # Saturday at 02:30 PM IST
+    - cron: '30 9 * * 0'  # Sunday at 03:30 PM IST
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  commit:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "rohitsriv28"
+        git config --global user.email "rohitraj2002@gmail.com"
+      shell: pwsh
+
+    - name: Update or Create Commit Info File
+      run: |
+        $FILE = "commit_info.md"
+        $LAST_COMMIT_TIME = "$(Get-Date)"
+
+        if (!(Test-Path $FILE)) {
+          echo "Hello Peoples" | Out-File -FilePath $FILE
+          echo "This is Commit Number: 1" | Out-File -Append -FilePath $FILE
+          echo "Last Commit Time: $LAST_COMMIT_TIME" | Out-File -Append -FilePath $FILE
+        } else {
+          $CURRENT_COUNT = Select-String -Path $FILE -Pattern "commit number: (\d+)" | ForEach-Object { $_.Matches.Groups[1].Value }
+          $CURRENT_COUNT = [int]$CURRENT_COUNT
+          $NEXT_COUNT = $CURRENT_COUNT + 1
+          (Get-Content $FILE) -replace "commit number: \d+", "commit number: $NEXT_COUNT" | Set-Content $FILE
+          echo "Last Commit Time: $LAST_COMMIT_TIME" | Out-File -Append -FilePath $FILE
+        }
+
+        git add .
+        git commit -m "Updated commit number to $NEXT_COUNT with Last Commit Time: $LAST_COMMIT_TIME"
+        git push
+      shell: pwsh
